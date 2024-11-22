@@ -358,11 +358,11 @@ class Allegro_Module(GraphModuleMixin, torch.nn.Module):
             mlp_output_dimension=None,
         )
 
-        self.final_latent_spin = latent(
-            mlp_input_dimension=self.latents[-1].out_features
-            + env_embed_multiplicity * n_scalar_outs,
-            mlp_output_dimension=None,
-        )
+        #self.final_latent_spin = latent(
+        #    mlp_input_dimension=self.latents[-1].out_features
+        #    + env_embed_multiplicity * n_scalar_outs,
+        #    mlp_output_dimension=None,
+        #)
         # - end build modules -
 
         # - layer resnet update weights -
@@ -418,11 +418,13 @@ class Allegro_Module(GraphModuleMixin, torch.nn.Module):
                 self.latent_out_field: o3.Irreps(
                     [(self.final_latent.out_features, (0, 1))]
                 ),
-                'edge_spin': o3.Irreps(
-                    [(self.final_latent_spin.out_features, (0, 1))]
-                ),
             }
         )
+        #        'edge_spin': o3.Irreps(
+        #            [(self.final_latent_spin.out_features, (0, 1))]
+        #        ),
+        #    }
+        #)
 
     def forward(self, data: AtomicDataDict.Type) -> AtomicDataDict.Type:
         """Evaluate.
@@ -625,11 +627,11 @@ class Allegro_Module(GraphModuleMixin, torch.nn.Module):
         new_latents = self.final_latent(
             torch.cat(latent_inputs_to_cat, dim=-1)[prev_mask]
         )
-        new_edge_spin = self.final_latent_spin(
-            torch.cat(latent_inputs_to_cat, dim=-1)[prev_mask]
-        )
+        #new_edge_spin = self.final_latent_spin(
+        #    torch.cat(latent_inputs_to_cat, dim=-1)[prev_mask]
+        #)
         new_latents = cutoff_coeffs[active_edges].unsqueeze(-1) * new_latents
-        new_edge_spin = cutoff_coeffs[active_edges].unsqueeze(-1) * new_edge_spin
+        #new_edge_spin = cutoff_coeffs[active_edges].unsqueeze(-1) * new_edge_spin
 
         
         if self.latent_resnet:
@@ -645,13 +647,13 @@ class Allegro_Module(GraphModuleMixin, torch.nn.Module):
         else:
             latents = torch.index_copy(latents, 0, active_edges, new_latents)
 
-        edge_spin = torch.index_copy(edge_spin, 0, active_edges, new_edge_spin)
+        #edge_spin = torch.index_copy(edge_spin, 0, active_edges, new_edge_spin)
         #edge_spin = new_edge_spin
         # - end final layer -
 
         # final latents
         data[self.latent_out_field] = latents
 
-        data['edge_spin'] = edge_spin
+        #data['edge_spin'] = edge_spin
 
         return data

@@ -17,10 +17,11 @@ from nequip.nn.embedding import (
 from allegro.nn import (
     NormalizedBasis,
     EdgewiseEnergySum,
+    EdgewiseSpinSum,
     Allegro_Module,
     ScalarMLP,
 )
-from allegro._keys import EDGE_FEATURES, EDGE_ENERGY
+from allegro._keys import EDGE_FEATURES, EDGE_ENERGY, EDGE_SPIN
 
 from nequip.model import builder_utils
 
@@ -83,8 +84,15 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
             ScalarMLP,
             dict(field=EDGE_FEATURES, out_field=EDGE_ENERGY, mlp_output_dimension=1),
         ),
+        "edge_spin": (
+            ScalarMLP,
+            dict(field=EDGE_FEATURES, out_field=EDGE_SPIN, 
+                 mlp_latent_dimensions = [], mlp_output_dimension=1),
+        ),
         # Sum edgewise energies -> per-atom energies:
         "edge_eng_sum": EdgewiseEnergySum,
+        # Sum spins -> per-atom spins
+        "edge_eng_spin": EdgewiseSpinSum,
         # Sum system energy:
         "total_energy_sum": (
             AtomwiseReduce,
@@ -95,7 +103,7 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
             ),
         ),
     }
-
+    #print(config["edge_eng"])
     model = SequentialGraphNetwork.from_parameters(shared_params=config, layers=layers)
 
     return model

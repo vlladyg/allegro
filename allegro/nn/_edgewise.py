@@ -117,3 +117,60 @@ class EdgewiseEnergySum(GraphModuleMixin, torch.nn.Module):
         data[AtomicDataDict.PER_ATOM_ENERGY_KEY] = atom_eng
 
         return data
+
+class EdgewiseSpinSum(GraphModuleMixin, torch.nn.Module):
+    """Sum edgewise energies.
+
+    Includes optional per-species-pair edgewise energy scales.
+    """
+
+    _factor: Optional[float]
+
+    def __init__(
+        self,
+        num_types: int,
+        avg_num_neighbors: Optional[float] = None,
+        normalize_edge_spin_sum: bool = True,
+        per_edge_species_scale: bool = False,
+        irreps_in={},
+    ):
+        """Sum edges into nodes."""
+        super().__init__()
+        self._init_irreps(
+            irreps_in=irreps_in,
+            my_irreps_in={_keys.EDGE_SPIN: "0e"},
+            irreps_out={_keys.PER_ATOM_SPIN_KEY: "0e"},
+        )
+
+        self._factor = None
+        if normalize_edge_spin_sum and avg_num_neighbors is not None:
+            self._factor = 1.0 / math.sqrt(avg_num_neighbors)
+
+        self.per_edge_species_scale = per_edge_species_scale
+        if self.per_edge_species_scale:
+            self.per_edge_scales_spin = torch.nn.Parameter(torch.ones(num_types, num_types))
+        else:
+            self.register_buffer("per_edge_scales_spin", torch.Tensor())
+
+    def forward(self, data: AtomicDataDict.Type) -> AtomicDataDict.Type:
+        edge_center = data[AtomicDataDict.EDGE_INDEX_KEY][0]
+        edge_neighbor = data[AtomicDataDict.EDGE_INDEX_KEY][1]
+
+        edge_spin = data[_keys.EDGE_SPIN]
+        species = data[AtomicDataDict.ATOM_TYPE_KEY].squeeze(-1)
+        center_species = species[edge_center]
+        neighbor_species = species[edge_neighbor]
+
+        if self.per_edge_species_scale:
+            edge_spin = edge_spin * self.per_edge_scales_spin[
+                center_species, neighbor_species
+            ].unsqueeze(-1)
+
+        atom_spin = scatter(edge_spin, edge_center, dim=0, dim_size=len(species))
+        factor: Optional[float] = self._factor  # torchscript hack for typing
+        if factor is not None:
+            atom_spin = atom_spin * factor
+
+        data[_keys.PER_ATOM_SPIN_KEY] = atom_spin
+
+        return data
