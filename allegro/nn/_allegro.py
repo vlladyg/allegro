@@ -461,11 +461,6 @@ class Allegro_Module(GraphModuleMixin, torch.nn.Module):
             device=edge_attr.device,
         )
 
-        edge_spin = torch.zeros(
-            (num_edges, self._latent_dim),
-            dtype=edge_attr.dtype,
-            device=edge_attr.device,
-        )
         
         active_edges = torch.arange(
             num_edges,
