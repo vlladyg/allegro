@@ -21,7 +21,7 @@ from allegro.nn import (
     Allegro_Module,
     ScalarMLP,
 )
-from allegro._keys import EDGE_FEATURES, EDGE_ENERGY, EDGE_SPIN
+from allegro._keys import EDGE_FEATURES, EDGE_ENERGY, EDGE_SPIN, EDGE_J
 
 from nequip.model import builder_utils
 
@@ -87,6 +87,11 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
         "edge_spin": (
             ScalarMLP,
             dict(field=EDGE_FEATURES, out_field=EDGE_SPIN, 
+                 mlp_latent_dimensions = [], mlp_output_dimension=1),
+        ),
+        "edge_J": (
+            ScalarMLP,
+            dict(field=EDGE_FEATURES, out_field=EDGE_J, 
                  mlp_latent_dimensions = [], mlp_output_dimension=1),
         ),
         # Sum edgewise energies -> per-atom energies:

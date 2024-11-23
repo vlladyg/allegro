@@ -19,7 +19,8 @@ NODE_SPIN_LENGTH: Final[str] = "node_spin_length"
 EDGE_SPIN: Final[str] = "edge_spin"
 EDGE_SPIN_DISTANCE: Final[str] = "edge_spin_distance"
     
+EDGE_J: Final[str] = "edge_J"
 
 register_fields(node_fields=[NODE_SPIN, NODE_SPIN_LENGTH])
-register_fields(edge_fields=[EDGE_ENERGY, EDGE_FEATURES, EDGE_SPIN, EDGE_SPIN_DISTANCE])
+register_fields(edge_fields=[EDGE_ENERGY, EDGE_FEATURES, EDGE_SPIN, EDGE_SPIN_DISTANCE, EDGE_J])
 register_fields(graph_fields=[PER_ATOM_SPIN_KEY])
