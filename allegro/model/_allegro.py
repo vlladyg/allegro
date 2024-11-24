@@ -21,7 +21,9 @@ from allegro.nn import (
     Allegro_Module,
     ScalarMLP,
 )
-from allegro._keys import EDGE_FEATURES, EDGE_ENERGY, EDGE_SPIN, EDGE_J
+from allegro._keys import EDGE_FEATURES, EDGE_ENERGY, EDGE_SPIN, EDGE_SPIN_DISTANCE_EMBEDDING, EDGE_J
+from allegro import RadialBasisSpinDistanceEncoding
+
 
 from nequip.model import builder_utils
 
@@ -98,6 +100,18 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
         "edge_eng_sum": EdgewiseEnergySum,
         # Sum spins -> per-atom spins
         "edge_eng_spin": EdgewiseSpinSum,
+        # encoding spin distance
+        "spin_basis": (
+            RadialBasisSpinDistanceEncoding,
+            dict(
+                basis=(
+                    NormalizedBasis
+                    if config.get("normalize_basis", True)
+                    else BesselBasis
+                ),
+                out_field=EDGE_SPIN_DISTANCE_EMBEDDING,
+            ),
+        ),
         # Sum system energy:
         "total_energy_sum": (
             AtomwiseReduce,

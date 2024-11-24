@@ -14,6 +14,7 @@ from nequip.utils.tp_utils import tp_path_exists
 
 from ._fc import ScalarMLPFunction
 from .. import _keys
+
 from ._strided import Contracter, MakeWeightedChannels, Linear
 from .cutoffs import cosine_cutoff, polynomial_cutoff
 
