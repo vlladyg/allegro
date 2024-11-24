@@ -103,6 +103,7 @@ class Allegro_Module_SEGNN(GraphModuleMixin, torch.nn.Module):
                 self.field,
                 self.edge_invariant_field,
                 self.node_invariant_field,
+                self.latent_out_field,
                 _keys.NODE_SPIN_LENGTH,
                 _keys.EDGE_SPIN_DISTANCE_EMBEDDING
             ],
@@ -328,7 +329,7 @@ class Allegro_Module_SEGNN(GraphModuleMixin, torch.nn.Module):
                                 # Plus edge spin distance embedding
                                 + self.irreps_in[_keys.EDGE_SPIN_DISTANCE_EMBEDDING].num_irreps
                                 # Plus output of the previous allegro layer latent features
-                                + self.irreps_in[_keys.EDGE_FEATURES].num_irreps
+                                + self.irreps_in[self.latent_out_field].num_irreps
                             )
                         ),
                         mlp_output_dimension=None,
@@ -466,7 +467,7 @@ class Allegro_Module_SEGNN(GraphModuleMixin, torch.nn.Module):
         node_spin_length = data[_keys.NODE_SPIN_LENGTH]
 
         # prev_latent
-        latent_HEGNN = data[self.field]
+        latent_HEGNN = data[self.latent_out_field]
         
         # pre-declare variables as Tensors for TorchScript
         scalars = self._zero
@@ -496,6 +497,7 @@ class Allegro_Module_SEGNN(GraphModuleMixin, torch.nn.Module):
             edge_spin_distance_embdedding,
             latent_HEGNN
         ]
+            
         # The nonscalar features. Initially, the edge data.
         features = edge_attr
 
