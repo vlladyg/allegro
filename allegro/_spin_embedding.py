@@ -76,7 +76,8 @@ class RadialBasisSpinDistanceEncoding(GraphModuleMixin, torch.nn.Module):
         self.out_field = out_field
         self._init_irreps(
             irreps_in=irreps_in,
-            irreps_out={self.out_field: o3.Irreps([(self.basis.num_basis, (0, 1))])},
+            irreps_out={self.out_field: o3.Irreps([(self.basis.num_basis, (0, 1))]), 
+                        _keys.NODE_SPIN_LENGTH: o3.Irreps([(1, (0, 1))])},
         )
 
     def forward(self, data: AtomicDataDict.Type) -> AtomicDataDict.Type:

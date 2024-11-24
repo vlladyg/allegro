@@ -19,9 +19,11 @@ from allegro.nn import (
     EdgewiseEnergySum,
     EdgewiseSpinSum,
     Allegro_Module,
+    Allegro_Module_SEGNN,
     ScalarMLP,
 )
 from allegro._keys import EDGE_FEATURES, EDGE_ENERGY, EDGE_SPIN, EDGE_SPIN_DISTANCE_EMBEDDING, EDGE_J
+from allegro._keys import EDGE_ENERGY_SEGNN
 from allegro import RadialBasisSpinDistanceEncoding
 
 
@@ -56,6 +58,8 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
         config["irreps_edge_sh"] = irreps_edge_sh
         config["nonscalars_include_parity"] = nonscalars_include_parity
 
+
+    print(config)
     layers = {
         # -- Encode --
         # Get various edge invariants
@@ -73,7 +77,7 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
         ),
         # Get edge nonscalars
         "spharm": SphericalHarmonicEdgeAttrs,
-        # The core allegro model:
+        # The HEGNN allegro model:
         "allegro": (
             Allegro_Module,
             dict(
@@ -86,11 +90,6 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
             ScalarMLP,
             dict(field=EDGE_FEATURES, out_field=EDGE_ENERGY, mlp_output_dimension=1),
         ),
-        "edge_spin": (
-            ScalarMLP,
-            dict(field=EDGE_FEATURES, out_field=EDGE_SPIN, 
-                 mlp_latent_dimensions = [], mlp_output_dimension=1),
-        ),
         "edge_J": (
             ScalarMLP,
             dict(field=EDGE_FEATURES, out_field=EDGE_J, 
@@ -98,8 +97,6 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
         ),
         # Sum edgewise energies -> per-atom energies:
         "edge_eng_sum": EdgewiseEnergySum,
-        # Sum spins -> per-atom spins
-        "edge_eng_spin": EdgewiseSpinSum,
         # encoding spin distance
         "spin_basis": (
             RadialBasisSpinDistanceEncoding,
@@ -112,6 +109,27 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
                 out_field=EDGE_SPIN_DISTANCE_EMBEDDING,
             ),
         ),
+        # The SEGNN allegro model:
+        "allegro_SEGNN": (
+            Allegro_Module_SEGNN,
+            dict(
+                field=AtomicDataDict.EDGE_ATTRS_KEY,  # initial input is the edge SH
+                edge_invariant_field=AtomicDataDict.EDGE_EMBEDDING_KEY,
+                node_invariant_field=AtomicDataDict.NODE_ATTRS_KEY,
+            ),
+        ),
+        "edge_eng_SEGNN": (
+            ScalarMLP,
+            dict(field=EDGE_FEATURES, out_field=EDGE_ENERGY_SEGNN, 
+                 mlp_latent_dimensions = [], mlp_output_dimension=1),
+        ),
+        "edge_spin": (
+            ScalarMLP,
+            dict(field=EDGE_FEATURES, out_field=EDGE_SPIN, 
+                 mlp_latent_dimensions = [], mlp_output_dimension=1),
+        ),
+        # Sum spins -> per-atom spins
+        "edge_eng_spin": EdgewiseSpinSum,
         # Sum system energy:
         "total_energy_sum": (
             AtomwiseReduce,
