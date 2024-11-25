@@ -17,13 +17,17 @@ from nequip.nn.embedding import (
 from allegro.nn import (
     NormalizedBasis,
     EdgewiseEnergySum,
+    EdgewiseEnergySumSEGNN,
+    EdgewiseEnergySumHEGNN,
     EdgewiseSpinSum,
+    AtomwiseReduceSpinGNN,
     Allegro_Module,
     Allegro_Module_SEGNN,
     ScalarMLP,
 )
-from allegro._keys import EDGE_FEATURES, EDGE_ENERGY, EDGE_SPIN, EDGE_SPIN_DISTANCE_EMBEDDING, EDGE_J
-from allegro._keys import EDGE_ENERGY_SEGNN
+#from allegro._keys import EDGE_FEATURES, EDGE_ENERGY, EDGE_SPIN, EDGE_SPIN_DISTANCE_EMBEDDING, EDGE_J
+#from allegro._keys import EDGE_ENERGY_SEGNN
+from allegro._keys import *
 from allegro import RadialBasisSpinDistanceEncoding
 
 
@@ -78,7 +82,7 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
         # Get edge nonscalars
         "spharm": SphericalHarmonicEdgeAttrs,
         # The HEGNN allegro model:
-        "allegro": (
+        "allegro_HEGNN": (
             Allegro_Module,
             dict(
                 field=AtomicDataDict.EDGE_ATTRS_KEY,  # initial input is the edge SH
@@ -109,6 +113,8 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
                 out_field=EDGE_SPIN_DISTANCE_EMBEDDING,
             ),
         ),
+        # Sum edgewise exchange terms -> per-atom energies of exchange terms:
+        "edge_eng_sum_HEGNN": EdgewiseEnergySumHEGNN,
         # The SEGNN allegro model:
         "allegro_SEGNN": (
             Allegro_Module_SEGNN,
@@ -128,14 +134,19 @@ def Allegro(config, initialize: bool, dataset: Optional[AtomicDataset] = None):
             dict(field=EDGE_FEATURES, out_field=EDGE_SPIN, 
                  mlp_latent_dimensions = [], mlp_output_dimension=1),
         ),
+        # Sum SEGNN energy sum
+        "edge_eng_sum_SEGNN": EdgewiseEnergySumSEGNN,
         # Sum spins -> per-atom spins
         "edge_eng_spin": EdgewiseSpinSum,
+        
         # Sum system energy:
         "total_energy_sum": (
-            AtomwiseReduce,
+            AtomwiseReduceSpinGNN,
             dict(
                 reduce="sum",
-                field=AtomicDataDict.PER_ATOM_ENERGY_KEY,
+                field1=AtomicDataDict.PER_ATOM_ENERGY_KEY,
+                field2=PER_ATOM_ENERGY_HEGNN,
+                field3=PER_ATOM_ENERGY_SEGNN,
                 out_field=AtomicDataDict.TOTAL_ENERGY_KEY,
             ),
         ),
